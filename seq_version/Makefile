@@ -1,4 +1,4 @@
-CFLAGS = -std=c++11 -Wall  -I libs/boost_1_67_0 -I libs/pugixml-1.9/src/
+CFLAGS = -std=c++11 -Wall  -I ../libs/boost_1_67_0 -I ../libs/pugixml-1.9/src/
 
 all: main.o pugixml.o xml_parse.o node.o trie.o
 		g++ $(CFLAGS)  $^ -o  main
