@@ -5,17 +5,38 @@
 #include "xml_parse.hpp"
 #include "trie.hpp"
 #include <boost/mpi.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/string.hpp>
+
 
 #define EXIT_ERROR 1
-#define NGRAM_NUM 6
-#define LENGTH 10
 
 using namespace std;
 namespace mpi = boost::mpi;
 
-vector<vector<string>> tokens_to_ngrams(vector<string> token_vec, unsigned int ngram_num) {
+void set_envs(unsigned int *ngram_num, unsigned int *page_limit, unsigned int *txt_length) {
     
-    vector<vector<string>> ngram_vec;
+    char *ngram_num_env, *page_limit_env, *txt_length_env;
+
+    ngram_num_env = getenv ("NGRAM_NUM");
+    if(ngram_num_env != NULL) {
+        *ngram_num = atoi(ngram_num_env);
+    }
+
+    page_limit_env = getenv ("PAGE_LIMIT");
+    if(page_limit_env != NULL) {
+        *page_limit = atoi(page_limit_env);
+    }
+
+    txt_length_env = getenv ("TXT_LENGTH");
+    if(txt_length_env != NULL) {
+        *txt_length = atoi(txt_length_env);
+    }
+}
+
+vector<string> tokens_to_serial_ngrams(vector<string> token_vec, unsigned int ngram_num) {
+    
+    vector<string> ngram_vec;
 
     for (unsigned int i = 0; i <= token_vec.size() - ngram_num; i++) {
         vector<string> ngram;
@@ -24,7 +45,7 @@ vector<vector<string>> tokens_to_ngrams(vector<string> token_vec, unsigned int n
             ngram.push_back(token_vec[i+j]);
         }
 
-        ngram_vec.push_back(ngram);
+        ngram_vec.insert(ngram_vec.end(), ngram.begin(), ngram.end());
     }
 
     return ngram_vec;
@@ -63,46 +84,71 @@ vector<string> random_txt_gen(Node* root, unsigned int length, default_random_en
     return text;  
 }
 
-int main(int argc, char *argv[]) {  
-    
+int main(int argc, char *argv[]) {
 
-
-    mpi::environment env;
-    mpi::communicator world;
-
-    /*if (world.rank() == 0) {
-        world.send(1, 0, std::string("Hello"));
-        std::string msg;
-        world.recv(1, 1, msg);
-        std::cout << msg << "!" << std::endl;
-    } else {
-        std::string msg;
-        world.recv(0, 0, msg);
-        std::cout << msg << ", ";
-        std::cout.flush();
-        world.send(0, 1, std::string("world"));
-    }*/
-
-
-
-    const char *filename = argv[1];
+    unsigned int ngram_num = 4;
+    unsigned int page_limit = 2000;
+    unsigned int txt_length = 20;
 
     random_device rd;
     default_random_engine seed(rd());
 
-    vector<string> txt = xml_to_text(filename);
+    mpi::environment env;
+    mpi::communicator world;
 
-    vector<string> txt_tokenized = tokenize_text(txt);
+    vector<string> serial_ngrams;
+    vector<string> txt;
+    vector<string> txt_tokenized;
 
-    vector<vector<string>> ngrams = tokens_to_ngrams(txt_tokenized, NGRAM_NUM);
-    
-    Node *root = build_trie(ngrams);
-    
-    vector<string> generated_text = random_txt_gen(root, LENGTH, seed);
-    
-    for(unsigned int j = 0; j< generated_text.size(); j++) {
-        cout << generated_text[j] << " ";
+    vector<string> wiki_files = {"../src/wikidump01.xml", "../src/wikidump02.xml", "../src/wikidump03.xml", "../src/wikidump04.xml"};
+
+    set_envs(&ngram_num, &page_limit, &txt_length);
+
+    txt = xml_to_text(wiki_files[world.rank()].c_str(), page_limit);
+    txt_tokenized = tokenize_text(txt);
+    serial_ngrams = tokens_to_serial_ngrams(txt_tokenized, ngram_num);
+
+    if(world.rank() > 0) {
+        world.send(0, 0, serial_ngrams);
     }
-    
+
+    else {
+        vector<string> proc_ngrams;
+        
+        for(int i = 1; i < world.size(); i++) {
+            world.recv(i, 0, proc_ngrams);
+            cout << "recebi do processo "<<proc_ngrams[0]<< "\n";
+            cout << "recebi do processo "<<i<< "\n";
+
+            serial_ngrams.insert(serial_ngrams.end(), proc_ngrams.begin(), proc_ngrams.end());
+        }
+        
+        Node *root = build_trie(serial_ngrams, ngram_num);
+        
+        vector<string> generated_text = random_txt_gen(root, txt_length, seed);
+        
+        for(unsigned int j = 0; j< generated_text.size(); j++) {
+            cout << generated_text[j] << " ";
+        }
+    }
     return 0;
 }
+
+
+
+    
+
+    /*const int token_proc_size = txt_tokenized.size() / world.size();
+    
+    vector<vector<string>> tokens_per_process;
+    
+    for (int j = 0; j < world.size(); ++j) {
+        for (int k = 0, token_idx = j * token_proc_size + k; k < token_proc_size && token_idx < txt_tokenized.size(); ++k, ++token_idx) {
+            tokens_per_process[j].push_back(txt_tokenized[token_idx]);
+        }
+    }
+
+    vector<string> tokens_part;
+     
+    mpi::scatter(world, tokens_per_process, tokens_part, 0);*/
+    

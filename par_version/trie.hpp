@@ -8,6 +8,6 @@
 
 using namespace std;
 
-Node* build_trie(vector<vector<string>> ngram_vec);
+Node* build_trie(vector<string> ngram_vec, int ngram_size);
 
 #endif

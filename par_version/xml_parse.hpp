@@ -8,7 +8,7 @@
 
 using namespace std;
 
-vector<string> xml_to_text(const char *filename);
+vector<string> xml_to_text(const char *filename, int page_limit);
 
 bool is_alpha(char c);
 
