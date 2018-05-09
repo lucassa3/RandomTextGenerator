@@ -28,5 +28,9 @@ There are some optional environment variables you might want to use:
 * PAGE_LIMIT -  number of pages each process will read from their respective xml. Big numbers will take lnger to parse (Default: 2000).
 * TXT_LENGTH - number of words multiplied by NGRAM_NUM that the generated text will have (Default: 20)
 
+Here's an example:
+```
+$ mpiexec -n 4 -x TXT_LENGTH=90 -x PAGE_LIMIT=100 ./main
+```
 
 Change what dump files you want to use for learning by replacing in main.cpp at wiki_files variable the path of each of your dump files. Since the project will route each dump in a separate process, be sure to set {number of processes} to the number of dump files that you're using.
