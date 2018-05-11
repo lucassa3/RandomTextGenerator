@@ -21,6 +21,10 @@ to compile everything. then use:
 ```
 $ mpiexec -n {number of processes} ./main
 ```
+or, on the sequential version, simply:
+```
+$ ./main
+```
 where {number of processes} is the number of processes you wan to create (e.g.: 4)
 <br><br>
 There are some optional environment variables you might want to use: 
@@ -29,8 +33,14 @@ There are some optional environment variables you might want to use:
 * TXT_LENGTH - number of words multiplied by NGRAM_NUM that the generated text will have (Default: 20)
 
 Here's an example:
+
+Parallel versions:
 ```
 $ mpiexec -n 4 -x TXT_LENGTH=90 -x PAGE_LIMIT=100 ./main
 ```
+Sequential version:
+```
+$ TXT_LENGTH=90 PAGE_LIMIT=100 ./main
+```
 
-Change what dump files you want to use for learning by replacing in main.cpp at wiki_files variable the path of each of your dump files. Since the project will route each dump in a separate process, be sure to set {number of processes} to the number of dump files that you're using.
+Change what dump files you want to use for learning by replacing in main.cpp at wiki_files variable the path of each of your dump files. Since the project will route each dump in a separate process, be sure to set {number of processes} equal or less to the number of dump files that you're using.
