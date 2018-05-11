@@ -105,7 +105,9 @@ int main(int argc, char *argv[]) {
     set_envs(&ngram_num, &page_limit, &txt_length);
 
     txt = xml_to_text(wiki_files[world.rank()].c_str(), page_limit);
+    
     txt_tokenized = tokenize_text(txt);
+    
     serial_ngrams = tokens_to_serial_ngrams(txt_tokenized, ngram_num);
 
     if(world.rank() > 0) {
@@ -117,8 +119,6 @@ int main(int argc, char *argv[]) {
         
         for(int i = 1; i < world.size(); i++) {
             world.recv(i, 0, proc_ngrams);
-            cout << "recebi do processo "<<proc_ngrams[0]<< "\n";
-            cout << "recebi do processo "<<i<< "\n";
 
             serial_ngrams.insert(serial_ngrams.end(), proc_ngrams.begin(), proc_ngrams.end());
         }
@@ -127,28 +127,12 @@ int main(int argc, char *argv[]) {
         
         vector<string> generated_text = random_txt_gen(root, txt_length, seed);
         
+        cout << endl;
         for(unsigned int j = 0; j< generated_text.size(); j++) {
             cout << generated_text[j] << " ";
         }
+        cout << endl << endl;
     }
     return 0;
 }
-
-
-
-    
-
-    /*const int token_proc_size = txt_tokenized.size() / world.size();
-    
-    vector<vector<string>> tokens_per_process;
-    
-    for (int j = 0; j < world.size(); ++j) {
-        for (int k = 0, token_idx = j * token_proc_size + k; k < token_proc_size && token_idx < txt_tokenized.size(); ++k, ++token_idx) {
-            tokens_per_process[j].push_back(txt_tokenized[token_idx]);
-        }
-    }
-
-    vector<string> tokens_part;
-     
-    mpi::scatter(world, tokens_per_process, tokens_part, 0);*/
     

@@ -27,11 +27,7 @@ vector<string> xml_to_text(const char *filename, int page_limit) {
             string node_txt = child_node.child("revision").child_value("text");
             txt_vec.push_back(node_txt);
         }
-        
-        else {
-            break;
-        }
-
+        else {break;}
         count++;
         
     }

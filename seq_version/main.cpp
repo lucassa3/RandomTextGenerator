@@ -11,6 +11,26 @@
 
 using namespace std;
 
+void set_envs(unsigned int *ngram_num, unsigned int *page_limit, unsigned int *txt_length) {
+    
+    char *ngram_num_env, *page_limit_env, *txt_length_env;
+
+    ngram_num_env = getenv ("NGRAM_NUM");
+    if(ngram_num_env != NULL) {
+        *ngram_num = atoi(ngram_num_env);
+    }
+
+    page_limit_env = getenv ("PAGE_LIMIT");
+    if(page_limit_env != NULL) {
+        *page_limit = atoi(page_limit_env);
+    }
+
+    txt_length_env = getenv ("TXT_LENGTH");
+    if(txt_length_env != NULL) {
+        *txt_length = atoi(txt_length_env);
+    }
+}
+
 vector<vector<string>> tokens_to_ngrams(vector<string> token_vec, unsigned int ngram_num) {
     
     vector<vector<string>> ngram_vec;
@@ -61,26 +81,34 @@ vector<string> random_txt_gen(Node* root, unsigned int length, default_random_en
     return text;  
 }
 
-int main(int argc, char *argv[]) {  
+int main(int argc, char *argv[]) {
     
-    const char *filename = argv[1];
+    unsigned int ngram_num = 4;
+    unsigned int page_limit = 2000;
+    unsigned int txt_length = 20;
+    
+    vector<string> wiki_files = {"../src/wikidump01.xml", "../src/wikidump02.xml", "../src/wikidump03.xml", "../src/wikidump04.xml"};
 
     random_device rd;
     default_random_engine seed(rd());
 
-    vector<string> txt = xml_to_text(filename);
+    set_envs(&ngram_num, &page_limit, &txt_length);
+
+    vector<string> txt = xml_to_text(wiki_files[0].c_str(), page_limit);
 
     vector<string> txt_tokenized = tokenize_text(txt);
 
-    vector<vector<string>> ngrams = tokens_to_ngrams(txt_tokenized, NGRAM_NUM);
+    vector<vector<string>> ngrams = tokens_to_ngrams(txt_tokenized, ngram_num);
     
     Node *root = build_trie(ngrams);
     
-    vector<string> generated_text = random_txt_gen(root, LENGTH, seed);
+    vector<string> generated_text = random_txt_gen(root, txt_length, seed);
     
+    cout << "\n";
     for(unsigned int j = 0; j< generated_text.size(); j++) {
         cout << generated_text[j] << " ";
     }
+    cout << "\n\n";
     
     return 0;
 }
