@@ -90,6 +90,8 @@ int main(int argc, char *argv[]) {
     unsigned int page_limit = 2000;
     unsigned int txt_length = 20;
 
+    clock_t begin = clock();
+
     random_device rd;
     default_random_engine seed(rd());
 
@@ -132,7 +134,15 @@ int main(int argc, char *argv[]) {
             cout << generated_text[j] << " ";
         }
         cout << endl << endl;
+
+        
+
     }
+
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    cout << "Porcess "<< world.rank() <<" Total time elapsed: " << time_spent << " seconds" << endl;
+
     return 0;
 }
     

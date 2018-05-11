@@ -9,32 +9,38 @@ using namespace std;
 
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
-vector<string> xml_to_text(const char *filename, int page_limit) {
+vector<string> xml_to_text(vector<string> filenames, int page_limit) {
     pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_file(filename);
-
-    if(!result) {
-        cout << "Error opening the xml file. Aborting";
-        exit(EXIT_ERROR);
-    }
-
-    pugi::xml_node root_node = doc.child("mediawiki");
     vector<string> txt_vec;
 
-    int count = 0;
-    for (pugi::xml_node child_node: root_node.children("page")) {
-        if(count < page_limit) {
-            string node_txt = child_node.child("revision").child_value("text");
-            txt_vec.push_back(node_txt);
-        }
+    for (string filename: filenames) {
         
-        else {
-            break;
+        pugi::xml_parse_result result = doc.load_file(filename.c_str());
+
+        if(!result) {
+            cout << "Error opening the xml file. Aborting";
+            exit(EXIT_ERROR);
         }
 
-        count++;  
-    }
+        pugi::xml_node root_node = doc.child("mediawiki");
+        
 
+        int count = 0;
+        for (pugi::xml_node child_node: root_node.children("page")) {
+            if(count < page_limit) {
+                string node_txt = child_node.child("revision").child_value("text");
+                txt_vec.push_back(node_txt);
+            }
+
+            else {
+                break;
+            }
+
+            count++;  
+        }
+
+    }
+   
     return txt_vec;
 }
 

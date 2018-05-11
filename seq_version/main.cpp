@@ -4,6 +4,7 @@
 #include <string>
 #include "xml_parse.hpp"
 #include "trie.hpp"
+#include <time.h>
 
 #define EXIT_ERROR 1
 #define NGRAM_NUM 6
@@ -89,12 +90,14 @@ int main(int argc, char *argv[]) {
     
     vector<string> wiki_files = {"../src/wikidump01.xml", "../src/wikidump02.xml", "../src/wikidump03.xml", "../src/wikidump04.xml"};
 
+    clock_t begin = clock();
+
     random_device rd;
     default_random_engine seed(rd());
 
     set_envs(&ngram_num, &page_limit, &txt_length);
 
-    vector<string> txt = xml_to_text(wiki_files[0].c_str(), page_limit);
+    vector<string> txt = xml_to_text(wiki_files, page_limit);
 
     vector<string> txt_tokenized = tokenize_text(txt);
 
@@ -109,6 +112,11 @@ int main(int argc, char *argv[]) {
         cout << generated_text[j] << " ";
     }
     cout << "\n\n";
+
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    cout << "Total time elapsed: " << time_spent << " seconds" << endl;
+
     
     return 0;
 }
